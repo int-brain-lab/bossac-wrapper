@@ -8,7 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-## [0.1.1]
+## [0.1.1] - 2026-10-12
 
 ### Added
 
@@ -21,7 +21,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - The package's license metadata is now the SPDX expression `MIT AND BSD-3-Clause`
 
-## [0.1.0]
+## [0.1.0] - 2026-10-12
 
 _First release._
 
