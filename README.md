@@ -23,23 +23,6 @@ bossac-wrapper requires Python 3.10 or later. Supported platforms are:
 Examples
 --------
 
-### Finding the port of a device
-
-All functions take the serial port of the device. To find it, use
-[pyserial](https://pyserial.readthedocs.io/)'s `comports()`, which bossac-wrapper installs as a
-dependency:
-
-```python
-from serial.tools.list_ports import comports
-
-for port in comports():
-    print(port.device, port.description, port.manufacturer)
-```
-
-```
-/dev/ttyACM0 SFE SAMD21 SparkFun
-```
-
 ### Uploading a firmware file
 
 To upload a firmware file to a device, use the `upload()` function. Both Intel HEX files (`.hex`)
