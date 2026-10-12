@@ -24,7 +24,7 @@ from serial.tools.list_ports_common import ListPortInfo
 
 log = logging.getLogger(__name__)
 
-__version__ = '0.1.0'
+__version__ = '0.1.1'
 """Version of bossac-wrapper."""
 _BOSSAC_VERSION = '1.9.1'
 """Version of the bundled bossac binary."""

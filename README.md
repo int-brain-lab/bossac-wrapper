@@ -103,6 +103,16 @@ Full Documentation
 
 The full API documentation is available [here](https://int-brain-lab.github.io/bossac-wrapper).
 
+License
+-------
+
+bossac-wrapper's own code is licensed under the
+[MIT License](https://github.com/int-brain-lab/bossac-wrapper/blob/main/LICENSE). The MIT
+License does not cover the bossac executable bundled with the wheels. bossac is part of
+[BOSSA](https://github.com/shumatech/BOSSA) by ShumaTech and is distributed under the
+BSD-3-Clause license - see
+[THIRD_PARTY_NOTICES.md](https://github.com/int-brain-lab/bossac-wrapper/blob/main/THIRD_PARTY_NOTICES.md).
+
 ![License](https://img.shields.io/github/license/int-brain-lab/bossac-wrapper)
 [![Coverage](https://img.shields.io/coverallsCoverage/github/int-brain-lab/bossac-wrapper)](https://coveralls.io/github/int-brain-lab/bossac-wrapper)
 [![CI](https://github.com/int-brain-lab/bossac-wrapper/actions/workflows/testing.yaml/badge.svg)](https://github.com/int-brain-lab/bossac-wrapper/actions)

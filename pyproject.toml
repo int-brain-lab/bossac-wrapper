@@ -6,7 +6,8 @@ authors = [
 ]
 requires-python = ">=3.10"
 readme = "README.md"
-license = {text = "MIT"}
+license = "MIT AND BSD-3-Clause"
+license-files = ["LICENSE", "THIRD_PARTY_NOTICES.md"]
 keywords = ["bossa", "bossac", "sam-ba", "atmel", "arduino", "firmware"]
 dynamic = ["version"]
 dependencies = [
