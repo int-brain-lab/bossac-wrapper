@@ -543,15 +543,29 @@ class TestTouch1200:
             bossac._touch_1200('/dev/ttyACM0')
 
 
+# POSIX paths can't be resolved on Windows - os.path.realpath stays Windows' own
+POSIX_ONLY = pytest.mark.skipif(sys.platform == 'win32', reason='POSIX paths')
+
+
 class TestPortKey:
     @pytest.mark.parametrize(
         ('platform', 'port', 'expected'),
         [
             ('win32', 'com3', 'COM3'),
             ('win32', '\\\\.\\COM10', 'COM10'),
-            ('darwin', '/dev/tty.usbmodem1101', '/dev/cu.usbmodem1101'),
-            ('darwin', '/dev/cu.usbmodem1101', '/dev/cu.usbmodem1101'),
-            ('linux', '/dev/ttyACM0', '/dev/ttyACM0'),
+            pytest.param(
+                'darwin',
+                '/dev/tty.usbmodem1101',
+                '/dev/cu.usbmodem1101',
+                marks=POSIX_ONLY,
+            ),
+            pytest.param(
+                'darwin',
+                '/dev/cu.usbmodem1101',
+                '/dev/cu.usbmodem1101',
+                marks=POSIX_ONLY,
+            ),
+            pytest.param('linux', '/dev/ttyACM0', '/dev/ttyACM0', marks=POSIX_ONLY),
         ],
     )
     def test_port_key(self, platform, port, expected):
