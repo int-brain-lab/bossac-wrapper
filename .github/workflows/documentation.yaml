@@ -1,0 +1,50 @@
+name: Documentation
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+    paths:
+      - 'docs/**'
+      - 'bossac/**'
+      - 'README.md'
+      - 'CHANGELOG.md'
+      - 'CONTRIBUTING.md'
+      - 'pyproject.toml'
+      - 'uv.lock'
+
+permissions:
+  contents: read
+  pages: write  # deploy to GitHub Pages
+  id-token: write  # verify the deployment's origin
+
+# don't let two deployments overlap, but let a running one finish
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  docs:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v7
+      - uses: astral-sh/setup-uv@v7
+        with:
+          enable-cache: true
+          python-version: '3.14'
+      - uses: ./.github/actions/ensure-bossac
+        with:
+          # same as testing.yaml's ubuntu-latest jobs, so that they share the cached binary
+          cache-key-os: ubuntu-latest
+          manylinux-image: quay.io/pypa/manylinux_2_28_x86_64
+          build-in-container: 'true'
+      - run: uv run sphinx-build -b dirhtml docs/source docs/build
+      - uses: actions/upload-pages-artifact@v5
+        with:
+          path: docs/build/
+      - id: deployment
+        uses: actions/deploy-pages@v5

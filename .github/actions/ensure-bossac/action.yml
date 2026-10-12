@@ -1,0 +1,79 @@
+name: Ensure bossac binary
+description: >
+  Restore a cached bossac binary for the current host, or build it from source with make if
+  not cached. Requires actions/checkout and astral-sh/setup-uv to have already run.
+inputs:
+  cache-key-os:
+    description: >
+      Identifier used in the cache key. Distinguishes runner.os values that are actually
+      different architectures (e.g. ubuntu-latest vs ubuntu-24.04-arm both report Linux) -
+      pass matrix.os from the calling workflow, or a fixed string on a non-matrix job.
+    required: true
+  manylinux-image:
+    description: >
+      The manylinux container image (e.g. quay.io/pypa/manylinux_2_28_x86_64) this Linux build is
+      built under, if any - folded into the cache key so a changed image (a version bump, or one
+      workflow using a different image than another) invalidates a binary built under the old
+      one instead of silently reusing it. Leave empty on macOS/Windows, or a Linux build that
+      isn't manylinux-based at all.
+    required: false
+    default: ''
+  build-in-container:
+    description: >
+      'true' to actually build inside `manylinux-image` via a nested `docker run` (only on a
+      cache miss), keeping the calling job itself on the bare runner throughout - use this when
+      the calling job is *not* already container-scoped (e.g. testing.yaml, where tests must run
+      outside the container). Leave as 'false' (default) when the calling job's own job-level
+      `container:` already *is* `manylinux-image` (e.g. a release build) - there, `manylinux-image`
+      is passed only for the cache key, and the direct build path below already runs in the right
+      environment on its own.
+    required: false
+    default: 'false'
+runs:
+  using: composite
+  steps:
+    - name: Determine bossac version
+      # Only the pinned _BOSSAC_VERSION and _BOSSAC_COMMIT actually affect the built binary -
+      # hashing all of bossac/__init__.py busts the cache on every edit to the Python wrapper.
+      id: bossac-version
+      shell: bash
+      run: |
+        echo "version=$(python3 -c 'import pdm_build; print(pdm_build._bossac_version())')" >> "$GITHUB_OUTPUT"
+        echo "commit=$(python3 -c 'import pdm_build; print(pdm_build._bossac_commit())')" >> "$GITHUB_OUTPUT"
+    - name: Cache bossac binary
+      id: cache-bossac
+      uses: actions/cache@v6
+      with:
+        path: bin
+        key: bossac-${{ inputs.cache-key-os }}-${{ inputs.manylinux-image || 'host' }}-${{ steps.bossac-version.outputs.version }}-${{ steps.bossac-version.outputs.commit }}-${{ hashFiles('pdm_build.py') }}
+    - name: Set up MSYS2 (Windows)
+      # BOSSA's Makefile only supports MinGW on Windows. The toolchain is put on the PATH, so
+      # that the build hook can call make from the runner's own Python.
+      if: runner.os == 'Windows' && steps.cache-bossac.outputs.cache-hit != 'true'
+      id: msys2
+      uses: msys2/setup-msys2@v2
+      with:
+        msystem: MINGW64
+        install: make mingw-w64-x86_64-gcc
+    - name: Add MSYS2 to the PATH (Windows)
+      if: runner.os == 'Windows' && steps.cache-bossac.outputs.cache-hit != 'true'
+      shell: bash
+      run: |
+        msys2="$(cygpath -u '${{ steps.msys2.outputs.msys2-location }}')"
+        echo "$(cygpath -w "$msys2/mingw64/bin")" >> "$GITHUB_PATH"
+        echo "$(cygpath -w "$msys2/usr/bin")" >> "$GITHUB_PATH"
+    - name: Ensure bossac binary (builds from source if not cached)
+      if: runner.os != 'Linux' || inputs.build-in-container != 'true'
+      shell: bash
+      run: python3 pdm_build.py
+    - name: Ensure bossac binary in manylinux container (builds from source if not cached)
+      if: >
+        runner.os == 'Linux' && inputs.build-in-container == 'true' &&
+        steps.cache-bossac.outputs.cache-hit != 'true'
+      shell: bash
+      # Root inside the container writes bin/bossac as root on the bind-mounted host path too, so
+      # reclaim ownership afterward - later steps (cache save, uv build) run as the runner user.
+      run: |
+        docker run --rm -v "$PWD:/workspace" -w /workspace "${{ inputs.manylinux-image }}" \
+          python3 pdm_build.py
+        sudo chown -R "$(id -u):$(id -g)" bin
